@@ -85,8 +85,12 @@ export class App implements OnDestroy, AfterViewInit {
       return [];
     }
 
+    console.log('Calculating subtotal income', this.incomeChildren());
+
     const data: Array<{ parent: string; range: string; total: number }> = [];
-    const incomeParents = this.incomeParentForm.value.map((item: any) => item.label);
+    const incomeParents = this.incomeParentForm.value.map(
+      (item: any, index: number) => `${item.label} - ${index}`
+    );
     for (const range of this.ranges()) {
       for (const parent of incomeParents) {
         const children = this.incomeChildren().filter(
@@ -105,7 +109,9 @@ export class App implements OnDestroy, AfterViewInit {
     }
 
     const data: Array<{ parent: string; range: string; total: number }> = [];
-    const expenseParents = this.expenseParentForm.value.map((item: any) => item.label);
+    const expenseParents = this.expenseParentForm.value.map(
+      (item: any, index: number) => `${item.label} - ${index}`
+    );
     for (const range of this.ranges()) {
       for (const parent of expenseParents) {
         const children = this.expenseChildren().filter(
@@ -205,14 +211,14 @@ export class App implements OnDestroy, AfterViewInit {
         takeUntil(this._unsubscribeAll),
         debounceTime(200),
         map((values) => {
-          return values.flatMap((item: IParentCategory) => {
+          return values.flatMap((item: IParentCategory, index: number) => {
             const label = item.label;
             return item.children.flatMap((child: IChildCategory) => {
               const childLabel = child.label;
               return child.values.map((valueItem: any) => ({
                 label: childLabel,
                 value: valueItem.value,
-                parent: label,
+                parent: `${label} - ${index}`,
                 time: valueItem.time,
               }));
             });
@@ -226,14 +232,14 @@ export class App implements OnDestroy, AfterViewInit {
         takeUntil(this._unsubscribeAll),
         debounceTime(200),
         map((values) => {
-          return values.flatMap((item: IParentCategory) => {
+          return values.flatMap((item: IParentCategory, index: number) => {
             const label = item.label;
             return item.children.flatMap((child: IChildCategory) => {
               const childLabel = child.label;
               return child.values.map((valueItem: any) => ({
                 label: childLabel,
                 value: valueItem.value,
-                parent: label,
+                parent: `${label} - ${index}`,
                 time: valueItem.time,
               }));
             });
@@ -247,8 +253,8 @@ export class App implements OnDestroy, AfterViewInit {
     this.addExpenseParent('Expenses');
 
     // Initialize with one child category each
-    this.addIncomeChild('Incomes', undefined, 'General Income');
-    this.addExpenseChild('Expenses', undefined, 'Operational Expense');
+    this.addIncomeChild(0, undefined, 'General Income');
+    this.addExpenseChild(0, undefined, 'Operational Expense');
   }
 
   ngAfterViewInit(): void {
@@ -293,13 +299,14 @@ export class App implements OnDestroy, AfterViewInit {
   }
 
   // Functions to add new income and expense child entries
-  addIncomeChild(parent?: string, range?: string, label?: string) {
+  addIncomeChild(index?: number, range?: string, label?: string) {
+    console.log('Adding income child:', { parent, range, label });
     const ranges = range ? [range] : this.ranges();
-    const parents = parent ? [parent] : this.incomeParentForm.value.map((item: any) => item.label);
-    for (const parentLabel of parents) {
-      const parentForm = this.incomeParentForm.controls.find(
-        (item) => item.value.label === parentLabel
-      );
+    const parentIndexes = index
+      ? [index]
+      : this.incomeParentForm.value.map((_: any, index: number) => index);
+    for (const index of parentIndexes) {
+      const parentForm = this.incomeParentForm.controls[index];
       if (parentForm) {
         const childrenArray = parentForm.get('children') as UntypedFormArray;
         const group = this._formBuilder.group({
@@ -315,13 +322,13 @@ export class App implements OnDestroy, AfterViewInit {
     }
   }
 
-  addExpenseChild(parent?: string, range?: string, label?: string) {
+  addExpenseChild(index?: number, range?: string, label?: string) {
     const ranges = range ? [range] : this.ranges();
-    const parents = parent ? [parent] : this.incomeParentForm.value.map((item: any) => item.label);
-    for (const parentLabel of parents) {
-      const parentForm = this.expenseParentForm.controls.find(
-        (item) => item.value.label === parentLabel
-      );
+    const parentIndexes = index
+      ? [index]
+      : this.expenseParentForm.value.map((item: any, index: number) => index);
+    for (const index of parentIndexes) {
+      const parentForm = this.expenseParentForm.controls[index];
       if (parentForm) {
         const childrenArray = parentForm.get('children') as UntypedFormArray;
         const group = this._formBuilder.group({
@@ -441,6 +448,13 @@ export class App implements OnDestroy, AfterViewInit {
     return children?.total || 0;
   }
 
+  getSubTotalExpenseForRange(range: string, parent: string): number {
+    const children = this.subTotalExpense().find(
+      (child) => child.range === range && child.parent === parent
+    );
+    return children?.total || 0;
+  }
+
   getFormGroup(group: AbstractControl): UntypedFormGroup {
     return group as UntypedFormGroup;
   }
@@ -449,8 +463,10 @@ export class App implements OnDestroy, AfterViewInit {
     return group as UntypedFormArray;
   }
 
-  preventDefault(event: Event) {
-    event.preventDefault();
+  preventDefault(event: KeyboardEvent) {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+    }
   }
 
   // Function to handle copy and paste of child entries

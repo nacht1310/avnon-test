@@ -21,7 +21,7 @@
 
     <tbody>
       <!-- Income Rows -->
-      @for(parent of incomeParentForm.controls; track $index){
+      @for(parent of incomeParentForm.controls; track $index; let parentIndex = $index){
       <!-- Parent Category Label -->
       <tr>
         <td class="parent" [colSpan]="ranges().length + 1">
@@ -77,11 +77,7 @@
 
       <!-- Add Sub Category -->
       <tr>
-        <td
-          [colSpan]="ranges().length + 1"
-          (click)="addIncomeChild(parent.value.label)"
-          class="cursor-pointer"
-        >
+        <td [colSpan]="ranges().length + 1" (click)="addIncomeChild($index)" class="cursor-pointer">
           Add new Sub Category
         </td>
       </tr>
@@ -91,7 +87,7 @@
         <td>Sub Totals</td>
         @for(time of ranges(); track $index){
         <td>
-          {{ getSubTotalIncomeForRange(time, parent.value.label) }}
+          {{ getSubTotalIncomeForRange(time, parent.value.label + ' - ' + parentIndex) }}
         </td>
         }
       </tr>
@@ -123,7 +119,7 @@
       </tr>
 
       <!-- Expense Rows -->
-      @for(parent of expenseParentForm.controls; track $index){
+      @for(parent of expenseParentForm.controls; track $index; let parentIndex = $index){
       <!-- Parent Category Label -->
       <tr>
         <td class="parent" [colSpan]="ranges().length + 1">
@@ -181,7 +177,7 @@
       <tr>
         <td
           [colSpan]="ranges().length + 1"
-          (click)="addExpenseChild(parent.value.label)"
+          (click)="addExpenseChild($index)"
           class="cursor-pointer"
         >
           Add new Sub Category
@@ -193,7 +189,7 @@
         <td>Sub Totals</td>
         @for(time of ranges(); track $index){
         <td>
-          {{ getSubTotalIncomeForRange(time, parent.value.label) }}
+          {{ getSubTotalExpenseForRange(time, parent.value.label + ' - ' + parentIndex) }}
         </td>
         }
       </tr>
@@ -207,17 +203,6 @@
         <td [colSpan]="ranges().length + 1" (click)="addExpenseParent()" class="cursor-pointer">
           Add new Parent Category
         </td>
-      </tr>
-
-      <tr>
-        <td [colSpan]="ranges().length + 1" [height]="'40px'"></td>
-      </tr>
-
-      <tr>
-        <td>Total Expenses</td>
-        @for(time of ranges(); track $index){
-        <td>{{ totalExpenseValue().get(time) || 0 }}</td>
-        }
       </tr>
 
       <tr>
