@@ -63,7 +63,12 @@
         $index){
         <td>
           <form [formGroup]="getFormGroup(subValue)">
-            <input type="text" formControlName="value" />
+            <input
+              #inputCell
+              type="number"
+              formControlName="value"
+              (keydown)="preventDefault($event)"
+            />
           </form>
         </td>
         }
@@ -160,7 +165,12 @@
         $index){
         <td>
           <form [formGroup]="getFormGroup(subValue)">
-            <input type="text" formControlName="value" />
+            <input
+              #inputCell
+              type="number"
+              formControlName="value"
+              (keydown)="preventDefault($event)"
+            />
           </form>
         </td>
         }

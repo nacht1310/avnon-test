@@ -1,4 +1,15 @@
-import { Component, computed, OnDestroy, signal, Signal, WritableSignal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  computed,
+  effect,
+  ElementRef,
+  HostListener,
+  OnDestroy,
+  signal,
+  Signal,
+  viewChildren,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
@@ -18,7 +29,36 @@ import { IChildCategory, IParentCategory } from './app.types';
   imports: [ReactiveFormsModule, MatIconModule, MatButtonModule],
   templateUrl: './app.html',
 })
-export class App implements OnDestroy {
+export class App implements OnDestroy, AfterViewInit {
+  @HostListener('window:keyup', ['$event'])
+  keyEvent(event: KeyboardEvent) {
+    const focusedElement = document.activeElement;
+    const index = this.inputCells().findIndex((el) => el.nativeElement === focusedElement);
+    if (event.key === 'ArrowDown') {
+      const calculatedIndex = index + this.ranges().length;
+      if (calculatedIndex < this.inputCells().length) {
+        this.inputCells()[calculatedIndex].nativeElement.focus();
+      }
+    }
+    if (event.key === 'ArrowUp') {
+      const calculatedIndex = index - this.ranges().length;
+      if (calculatedIndex >= 0) {
+        this.inputCells()[calculatedIndex].nativeElement.focus();
+      }
+    }
+    if (event.key === 'ArrowLeft') {
+      const prevIndex = index - 1 >= 0 ? index - 1 : 0;
+      this.inputCells()[prevIndex].nativeElement.focus();
+    }
+    if (event.key === 'ArrowRight') {
+      const nextIndex =
+        index + 1 < this.inputCells().length ? index + 1 : this.inputCells().length - 1;
+      this.inputCells()[nextIndex].nativeElement.focus();
+    }
+  }
+
+  inputCells = viewChildren<ElementRef<HTMLInputElement>>('inputCell');
+
   // Unsubscribe from all subscriptions
   private _unsubscribeAll = new Subject<void>();
 
@@ -205,6 +245,14 @@ export class App implements OnDestroy {
     // Initialize with one parent category each
     this.addIncomeParent('Incomes');
     this.addExpenseParent('Expenses');
+
+    // Initialize with one child category each
+    this.addIncomeChild('Incomes', undefined, 'General Income');
+    this.addExpenseChild('Expenses', undefined, 'Operational Expense');
+  }
+
+  ngAfterViewInit(): void {
+    this.inputCells()[0].nativeElement.focus();
   }
 
   ngOnDestroy(): void {
@@ -240,7 +288,7 @@ export class App implements OnDestroy {
   }
 
   // Functions to add new income and expense child entries
-  addIncomeChild(parent?: string, range?: string) {
+  addIncomeChild(parent?: string, range?: string, label?: string) {
     const ranges = range ? [range] : this.ranges();
     const parents = parent ? [parent] : this.incomeParentForm.value.map((item: any) => item.label);
     for (const parentLabel of parents) {
@@ -249,7 +297,10 @@ export class App implements OnDestroy {
       );
       if (parentForm) {
         const childrenArray = parentForm.get('children') as UntypedFormArray;
-        const group = this._formBuilder.group({ label: [''], values: this._formBuilder.array([]) });
+        const group = this._formBuilder.group({
+          label: [label],
+          values: this._formBuilder.array([]),
+        });
         for (const value of ranges) {
           const valuesArray = group.get('values') as UntypedFormArray;
           valuesArray.push(this._formBuilder.group({ value: [0], time: [value] }));
@@ -259,7 +310,7 @@ export class App implements OnDestroy {
     }
   }
 
-  addExpenseChild(parent?: string, range?: string) {
+  addExpenseChild(parent?: string, range?: string, label?: string) {
     const ranges = range ? [range] : this.ranges();
     const parents = parent ? [parent] : this.incomeParentForm.value.map((item: any) => item.label);
     for (const parentLabel of parents) {
@@ -268,7 +319,10 @@ export class App implements OnDestroy {
       );
       if (parentForm) {
         const childrenArray = parentForm.get('children') as UntypedFormArray;
-        const group = this._formBuilder.group({ label: [''], values: this._formBuilder.array([]) });
+        const group = this._formBuilder.group({
+          label: [label],
+          values: this._formBuilder.array([]),
+        });
         for (const value of ranges) {
           const valuesArray = group.get('values') as UntypedFormArray;
           valuesArray.push(this._formBuilder.group({ value: [0], time: [value] }));
@@ -386,6 +440,10 @@ export class App implements OnDestroy {
 
   getFormArray(group: AbstractControl): UntypedFormArray {
     return group as UntypedFormArray;
+  }
+
+  preventDefault(event: Event) {
+    event.preventDefault();
   }
 
   // Function to handle copy and paste of child entries
