@@ -148,7 +148,7 @@ export class App implements OnDestroy {
           const ranges = this.getRangeValues({ start, end });
 
           // Update child entries for both income and expense forms
-          this.updateChildrenForNewRanges();
+          this.updateChildrenForNewRanges(ranges);
 
           return ranges;
         })
@@ -303,8 +303,7 @@ export class App implements OnDestroy {
   }
 
   // Function to update the list of children when ranges change
-  updateChildrenForNewRanges() {
-    const ranges = this.ranges();
+  updateChildrenForNewRanges(ranges: string[]) {
     // Update income children
     for (const parentControl of this.incomeParentForm.controls) {
       const childrenArray = parentControl.get('children') as UntypedFormArray;
@@ -314,7 +313,15 @@ export class App implements OnDestroy {
         // Add new ranges
         for (const range of ranges) {
           if (!existingTimes.includes(range)) {
-            valuesArray.push(this._formBuilder.group({ value: [0], time: [range] }));
+            const group = this._formBuilder.group({ value: [0], time: [range] });
+            if (
+              DateTime.fromFormat(range, 'yyyy-MM') <
+              DateTime.fromFormat(existingTimes[0], 'yyyy-MM')
+            ) {
+              valuesArray.insert(0, group);
+            } else {
+              valuesArray.push(group);
+            }
           }
         }
 
@@ -337,8 +344,13 @@ export class App implements OnDestroy {
         const existingTimes = valuesArray.value.map((item: any) => item.time);
         // Add new ranges
         for (const range of ranges) {
-          if (!existingTimes.includes(range)) {
-            valuesArray.push(this._formBuilder.group({ value: [0], time: [range] }));
+          const group = this._formBuilder.group({ value: [0], time: [range] });
+          if (
+            DateTime.fromFormat(range, 'yyyy-MM') < DateTime.fromFormat(existingTimes[0], 'yyyy-MM')
+          ) {
+            valuesArray.insert(0, group);
+          } else {
+            valuesArray.push(group);
           }
         }
 
