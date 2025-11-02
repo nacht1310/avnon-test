@@ -1,2 +1,22 @@
 /* You can add global styles to this file, and also import other style files */
 @import 'tailwindcss';
+
+table {
+  @apply border-2 border-collapse;
+}
+table th {
+  @apply border-2;
+  @apply p-2;
+}
+
+table td {
+  @apply border-2;
+  @apply p-2;
+}
+
+.parent {
+  @apply font-bold text-2xl;
+}
+
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
