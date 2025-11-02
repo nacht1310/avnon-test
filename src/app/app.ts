@@ -1,5 +1,4 @@
-import { JsonPipe } from '@angular/common';
-import { Component, computed, OnDestroy, Signal, signal } from '@angular/core';
+import { Component, computed, OnDestroy, signal, Signal, WritableSignal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
@@ -8,11 +7,11 @@ import {
   UntypedFormArray,
   UntypedFormGroup,
 } from '@angular/forms';
-import { DateTime } from 'luxon';
-import { debounceTime, map, Subject, takeUntil, tap } from 'rxjs';
-import { IParentCategory, IChildCategory } from './app.types';
-import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { DateTime } from 'luxon';
+import { debounceTime, map, Subject, takeUntil } from 'rxjs';
+import { IChildCategory, IParentCategory } from './app.types';
 
 @Component({
   selector: 'app-root',
@@ -30,6 +29,9 @@ export class App implements OnDestroy {
     start: '2024-01',
     end: '2024-12',
   };
+
+  // Signal to hold copy data
+  copyData = signal<IChildCategory | null>(null);
 
   // Set up signals to hold income and expense values
   incomeParentForm!: UntypedFormArray;
@@ -364,9 +366,6 @@ export class App implements OnDestroy {
         }
       }
     }
-
-    console.log(this.incomeParentForm.value);
-    console.log(this.expenseParentForm.value);
   }
 
   // Map time to month year format
@@ -387,5 +386,47 @@ export class App implements OnDestroy {
 
   getFormArray(group: AbstractControl): UntypedFormArray {
     return group as UntypedFormArray;
+  }
+
+  // Function to handle copy and paste of child entries
+  copyChild(parent: string, index: number, type: 'income' | 'expense') {
+    const parentForm =
+      type === 'income'
+        ? this.incomeParentForm.controls.find((item) => item.value.label === parent)
+        : this.expenseParentForm.controls.find((item) => item.value.label === parent);
+
+    if (parentForm) {
+      const childrenArray = parentForm.get('children') as UntypedFormArray;
+      const childValue = childrenArray.at(index).value as IChildCategory;
+      this.copyData.set(childValue);
+    }
+  }
+
+  pasteChild(parent: string, index: number, type: 'income' | 'expense') {
+    const dataToPaste = this.copyData();
+    if (!dataToPaste) {
+      return;
+    }
+
+    const parentForm =
+      type === 'income'
+        ? this.incomeParentForm.controls.find((item) => item.value.label === parent)
+        : this.expenseParentForm.controls.find((item) => item.value.label === parent);
+
+    if (parentForm) {
+      const childrenArray = parentForm.get('children') as UntypedFormArray;
+      childrenArray.removeAt(index);
+      const group = this._formBuilder.group({
+        label: [dataToPaste.label],
+        values: this._formBuilder.array([]),
+      });
+      const valuesArray = group.get('values') as UntypedFormArray;
+
+      for (const data of dataToPaste.values) {
+        valuesArray.push(this._formBuilder.group({ time: [data.time], value: [data.value] }));
+      }
+
+      childrenArray.insert(index, group);
+    }
   }
 }

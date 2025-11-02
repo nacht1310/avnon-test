@@ -50,6 +50,12 @@
             <button matButton (click)="removeIncomeChild(parent.value.label, $index)">
               <mat-icon fontIcon="delete"></mat-icon>
             </button>
+            <button matButton (click)="copyChild(parent.value.label, $index, 'income')">
+              <mat-icon fontIcon="content_copy"></mat-icon>
+            </button>
+            <button matButton (click)="pasteChild(parent.value.label, $index, 'income')">
+              <mat-icon fontIcon="content_paste"></mat-icon>
+            </button>
           </div>
         </td>
 
@@ -140,6 +146,12 @@
             </form>
             <button matButton (click)="removeExpenseChild(parent.value.label, $index)">
               <mat-icon fontIcon="delete"></mat-icon>
+            </button>
+            <button matButton (click)="copyChild(parent.value.label, $index, 'expense')">
+              <mat-icon fontIcon="content_copy"></mat-icon>
+            </button>
+            <button matButton (click)="pasteChild(parent.value.label, $index, 'expense')">
+              <mat-icon fontIcon="content_paste"></mat-icon>
             </button>
           </div>
         </td>
