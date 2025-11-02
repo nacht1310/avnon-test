@@ -1,1 +1,232 @@
-<router-outlet />
+<div class="p-10 flex flex-col gap-6">
+  <form class="flex gap-4" [formGroup]="rangeForm">
+    <div class="flex flex-col">
+      <label for="startMonth">Start Month</label>
+      <input type="month" name="startMonth" formControlName="start" />
+    </div>
+    <div class="flex flex-col">
+      <label for="endMonth">End Month</label>
+      <input type="month" name="endMonth" formControlName="end" />
+    </div>
+  </form>
+
+  <table>
+    <!-- Table Header -->
+    <thead>
+      <th></th>
+      @for(time of ranges(); track $index){
+      <th>{{ mapTimeToMonthYear(time) }}</th>
+      }
+    </thead>
+
+    <tbody>
+      <!-- Income Rows -->
+      @for(parent of incomeParentForm.controls; track $index){
+      <!-- Parent Category Label -->
+      <tr>
+        <td class="parent" [colSpan]="ranges().length + 1">
+          <div class="flex gap-2 items-center">
+            <form [formGroup]="getFormGroup(parent)">
+              <input type="text" formControlName="label" />
+            </form>
+
+            @if($index) {
+            <button matButton (click)="removeIncomeParent($index)">
+              <mat-icon fontIcon="delete"></mat-icon>
+            </button>
+            }
+          </div>
+        </td>
+      </tr>
+
+      @for(child of getFormArray(getFormGroup(parent).controls['children']).controls; track $index){
+      <!-- Child Category Rows -->
+      <tr>
+        <td>
+          <div class="flex items-center">
+            <form [formGroup]="getFormGroup(child)">
+              <input type="text" formControlName="label" />
+            </form>
+            <button matButton (click)="removeIncomeChild(parent.value.label, $index)">
+              <mat-icon fontIcon="delete"></mat-icon>
+            </button>
+          </div>
+        </td>
+
+        @for(subValue of getFormArray(getFormGroup(child).controls['values']).controls; track
+        $index){
+        <td>
+          <form [formGroup]="getFormGroup(subValue)">
+            <input type="text" formControlName="value" />
+          </form>
+        </td>
+        }
+      </tr>
+      }
+
+      <!-- Add Sub Category -->
+      <tr>
+        <td
+          [colSpan]="ranges().length + 1"
+          (click)="addIncomeChild(parent.value.label)"
+          class="cursor-pointer"
+        >
+          Add new Sub Category
+        </td>
+      </tr>
+
+      <!-- Sub Totals -->
+      <tr>
+        <td>Sub Totals</td>
+        @for(time of ranges(); track $index){
+        <td>
+          {{ getSubTotalIncomeForRange(time, parent.value.label) }}
+        </td>
+        }
+      </tr>
+
+      <tr>
+        <td [colSpan]="ranges().length + 1" [height]="'40px'"></td>
+      </tr>
+      }
+
+      <tr>
+        <td [colSpan]="ranges().length + 1" (click)="addIncomeParent()" class="cursor-pointer">
+          Add new Parent Category
+        </td>
+      </tr>
+
+      <tr>
+        <td [colSpan]="ranges().length + 1" [height]="'40px'"></td>
+      </tr>
+
+      <tr>
+        <td>Total Income</td>
+        @for(time of ranges(); track $index){
+        <td>{{ totalIncomeValue().get(time) || 0 }}</td>
+        }
+      </tr>
+
+      <tr>
+        <td [colSpan]="ranges().length + 1" [height]="'40px'"></td>
+      </tr>
+
+      <!-- Expense Rows -->
+      @for(parent of expenseParentForm.controls; track $index){
+      <!-- Parent Category Label -->
+      <tr>
+        <td class="parent" [colSpan]="ranges().length + 1">
+          <div class="flex gap-2 items-center">
+            <form [formGroup]="getFormGroup(parent)">
+              <input type="text" formControlName="label" />
+            </form>
+
+            @if($index) {
+            <button matButton (click)="removeExpenseParent($index)">
+              <mat-icon fontIcon="delete"></mat-icon>
+            </button>
+            }
+          </div>
+        </td>
+      </tr>
+
+      @for(child of getFormArray(getFormGroup(parent).controls['children']).controls; track $index){
+      <!-- Child Category Rows -->
+      <tr>
+        <td>
+          <div class="flex gap-2 items-center">
+            <form [formGroup]="getFormGroup(child)">
+              <input type="text" formControlName="label" />
+            </form>
+            <button matButton (click)="removeExpenseChild(parent.value.label, $index)">
+              <mat-icon fontIcon="delete"></mat-icon>
+            </button>
+          </div>
+        </td>
+
+        @for(subValue of getFormArray(getFormGroup(child).controls['values']).controls; track
+        $index){
+        <td>
+          <form [formGroup]="getFormGroup(subValue)">
+            <input type="text" formControlName="value" />
+          </form>
+        </td>
+        }
+      </tr>
+      }
+
+      <!-- Add Sub Category -->
+      <tr>
+        <td
+          [colSpan]="ranges().length + 1"
+          (click)="addExpenseChild(parent.value.label)"
+          class="cursor-pointer"
+        >
+          Add new Sub Category
+        </td>
+      </tr>
+
+      <!-- Sub Totals -->
+      <tr>
+        <td>Sub Totals</td>
+        @for(time of ranges(); track $index){
+        <td>
+          {{ getSubTotalIncomeForRange(time, parent.value.label) }}
+        </td>
+        }
+      </tr>
+
+      <tr>
+        <td [colSpan]="ranges().length + 1" [height]="'40px'"></td>
+      </tr>
+      }
+
+      <tr>
+        <td [colSpan]="ranges().length + 1" (click)="addExpenseParent()" class="cursor-pointer">
+          Add new Parent Category
+        </td>
+      </tr>
+
+      <tr>
+        <td [colSpan]="ranges().length + 1" [height]="'40px'"></td>
+      </tr>
+
+      <tr>
+        <td>Total Expenses</td>
+        @for(time of ranges(); track $index){
+        <td>{{ totalExpenseValue().get(time) || 0 }}</td>
+        }
+      </tr>
+
+      <tr>
+        <td [colSpan]="ranges().length + 1" [height]="'40px'"></td>
+      </tr>
+
+      <!-- Total Summary Rows -->
+      <tr>
+        <td>Total Expenses</td>
+        @for(time of ranges(); track $index){
+        <td>{{ totalExpenseValue().get(time) || 0 }}</td>
+        }
+      </tr>
+      <tr>
+        <td>Profit/Loss</td>
+        @for(time of ranges(); track $index){
+        <td>{{ profitLossValue().get(time) || 0 }}</td>
+        }
+      </tr>
+      <tr>
+        <td>Opening Balance</td>
+        @for(time of ranges(); track $index){
+        <td>{{ openCloseBalance().get(time).opening || 0 }}</td>
+        }
+      </tr>
+      <tr>
+        <td>Closing Balance</td>
+        @for(time of ranges(); track $index){
+        <td>{{ openCloseBalance().get(time).closing || 0 }}</td>
+        }
+      </tr>
+    </tbody>
+  </table>
+</div>
