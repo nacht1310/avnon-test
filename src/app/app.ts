@@ -264,6 +264,11 @@ export class App implements OnDestroy, AfterViewInit {
   getRangeValues({ start, end }: { start: string; end: string }): Array<string> {
     const startValue = DateTime.fromFormat(start, 'yyyy-MM');
     const endValue = DateTime.fromFormat(end, 'yyyy-MM');
+
+    if (endValue < startValue) {
+      return [];
+    }
+
     const diff = endValue.diff(startValue, 'months').months;
 
     const ranges: Array<string> = [];
@@ -371,8 +376,9 @@ export class App implements OnDestroy, AfterViewInit {
           if (!existingTimes.includes(range)) {
             const group = this._formBuilder.group({ value: [0], time: [range] });
             if (
+              existingTimes.length &&
               DateTime.fromFormat(range, 'yyyy-MM') <
-              DateTime.fromFormat(existingTimes[0], 'yyyy-MM')
+                DateTime.fromFormat(existingTimes[0], 'yyyy-MM')
             ) {
               valuesArray.insert(0, group);
             } else {
@@ -402,6 +408,7 @@ export class App implements OnDestroy, AfterViewInit {
         for (const range of ranges) {
           const group = this._formBuilder.group({ value: [0], time: [range] });
           if (
+            existingTimes.length &&
             DateTime.fromFormat(range, 'yyyy-MM') < DateTime.fromFormat(existingTimes[0], 'yyyy-MM')
           ) {
             valuesArray.insert(0, group);
